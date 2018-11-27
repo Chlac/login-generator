@@ -1,6 +1,8 @@
 package geco;
 
 import java.text.Normalizer;
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -34,14 +36,36 @@ public class LoginGenerator {
      * @return le login genere
      */
     public String generateLoginForNomAndPrenom(String nom, String prenom) {
+
         String p = deAccent(prenom.substring(0,1).toUpperCase());
         String n = deAccent(nom.substring(0,3).toUpperCase());
-        String login = p+n ;
+        final String login = p+n ;
+        String effective_login = login;
+
         if (loginService.loginExists(login)) {
-            login = login + "1" ;
+
+            List<String> duplicates = loginService.findAllLoginsStartingWith(login);
+            duplicates.remove(login);
+
+            if(duplicates.size() > 0) {
+
+                System.out.println(duplicates);
+                    Integer last =
+                            duplicates
+                            .stream()
+                            .map(l -> Integer.parseInt(l.substring(login.length())))
+                            .reduce(Integer::max).get();
+                    effective_login += (last + 1);
+
+            } else {
+                effective_login += "1";
+            }
+
+            System.out.println(effective_login);
         }
-        loginService.addLogin(login);
-        return login;
+
+        loginService.addLogin(effective_login);
+        return effective_login;
     }
 
     /**
